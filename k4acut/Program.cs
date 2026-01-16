@@ -1,6 +1,7 @@
 ﻿using K4AdotNet.Record;
 using ConsoleAppFramework;
 using System.Diagnostics;
+using K4AdotNet.Sensor;
 
 
 ConsoleApp.Run(args, (
@@ -20,11 +21,23 @@ ConsoleApp.Run(args, (
     using var playback = new Playback(input);
 
     playback.GetRecordConfiguration(out var config);
-    using var recorder = new Recorder(output, config);
+    var deviceConfig = new DeviceConfiguration()
+    {
+        ColorFormat = config.ColorFormat,
+        ColorResolution = config.ColorResolution,
+        DepthMode = config.DepthMode,
+        CameraFps = config.CameraFps,
+    };
+    var isImuEnabled = config.ImuTrackEnabled;
+
+    using var recorder = new Recorder(output, null, deviceConfig);
 
     Console.WriteLine($"Cutting: {start} -> {end} ...");
 
     playback.SeekTimestamp(start, PlaybackSeekOrigin.Begin);
+    recorder.WriteHeader();
+    if (isImuEnabled)
+        recorder.AddImuTrack();
 
     var count = 0;
     var sw = Stopwatch.StartNew();
@@ -41,8 +54,14 @@ ConsoleApp.Run(args, (
 
             recorder.WriteCapture(capture);
 
+            if (isImuEnabled
+                && playback.TryGetNextImuSample(out var imuSample))
+            {
+                recorder.WriteImuSample(imuSample);
+            }
+
             count++;
-            if (count % 30 == 0) Console.Write("."); // 進捗表示
+            if (count % 30 == 0) Console.Write("."); // progression indicator
         }
     }
 
