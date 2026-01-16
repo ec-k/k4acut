@@ -7,8 +7,8 @@ using K4AdotNet.Sensor;
 ConsoleApp.Run(args, (
     [Argument] string input,
     [Argument] string output,
-    TimeSpan start,
-    TimeSpan end
+    [Argument] TimeSpan start,
+    [Argument] TimeSpan end
 ) =>
 {
     if (!File.Exists(input))
