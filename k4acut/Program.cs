@@ -4,7 +4,7 @@ using System.Diagnostics;
 using K4AdotNet.Sensor;
 
 
-ConsoleApp.Run(args, (
+ConsoleApp.Run(args, async (
     [Argument] string input,
     [Argument] string output,
     [Argument] TimeSpan start,
@@ -35,9 +35,9 @@ ConsoleApp.Run(args, (
     Console.WriteLine($"Cutting: {start} -> {end} ...");
 
     playback.SeekTimestamp(start, PlaybackSeekOrigin.Begin);
-    recorder.WriteHeader();
     if (isImuEnabled)
         recorder.AddImuTrack();
+    recorder.WriteHeader();
 
     var count = 0;
     var sw = Stopwatch.StartNew();
@@ -47,8 +47,8 @@ ConsoleApp.Run(args, (
         using (capture)
         {
             var currentPos = capture.DepthImage?.DeviceTimestamp
-                          ?? capture.ColorImage?.DeviceTimestamp
-                          ?? TimeSpan.Zero;
+                            ?? capture.ColorImage?.DeviceTimestamp
+                            ?? TimeSpan.Zero;
 
             if (currentPos > end) break;
 
@@ -62,6 +62,9 @@ ConsoleApp.Run(args, (
 
             count++;
             if (count % 30 == 0) Console.Write("."); // progression indicator
+
+
+            await Task.Delay(TimeSpan.FromMilliseconds(1)); // throttling
         }
     }
 
