@@ -31,6 +31,8 @@ ConsoleApp.Run(args, async (
     var isImuEnabled = config.ImuTrackEnabled;
 
     using var recorder = new Recorder(output, null, deviceConfig);
+    var rawCalibration = playback.GetRawCalibration();
+    recorder.AddTag("CUSTOM_CALIBRATION_RAW", Convert.ToBase64String(rawCalibration));
 
     Console.WriteLine($"Cutting: {start} -> {end} ...");
 
