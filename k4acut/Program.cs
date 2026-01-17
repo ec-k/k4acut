@@ -1,14 +1,15 @@
-﻿using K4AdotNet.Record;
-using ConsoleAppFramework;
-using System.Diagnostics;
+﻿using ConsoleAppFramework;
+using K4AdotNet.Record;
 using K4AdotNet.Sensor;
+using System.Diagnostics;
 
 
 ConsoleApp.Run(args, async (
     [Argument] string input,
     [Argument] string output,
     [Argument] TimeSpan start,
-    [Argument] TimeSpan end
+    [Argument] TimeSpan end,
+    double speedLimit = 2.0
 ) =>
 {
     if (!File.Exists(input))
@@ -63,10 +64,21 @@ ConsoleApp.Run(args, async (
             }
 
             count++;
+
+
+            // throttling
+            var virtualElapsed = currentPos.ToTimeSpan() - start;
+            var realElapsed = sw.Elapsed;
+            if (virtualElapsed.TotalSeconds > realElapsed.TotalSeconds * speedLimit)
+            {
+                await Task.Delay(1);
+            }
+            else if (count % 10 == 0)
+            {
+                await Task.Yield();
+            }
+
             if (count % 30 == 0) Console.Write("."); // progression indicator
-
-
-            await Task.Delay(TimeSpan.FromMilliseconds(1)); // throttling
         }
     }
 
