@@ -9,7 +9,7 @@ ConsoleApp.Run(args, async (
     [Argument] string output,
     [Argument] TimeSpan start,
     [Argument] TimeSpan end,
-    double speedLimit = 2.0
+    string? writeSpeed = null
 ) =>
 {
     if (!File.Exists(input))
@@ -17,6 +17,21 @@ ConsoleApp.Run(args, async (
         Console.Error.WriteLine($"Error: Input file '{input}' not found.");
         return;
     }
+
+    // Parse --write-speed option (e.g., "x1.0", "x0.5"). Defaults to x2.0.
+    double writeSpeedValue = 2.0;
+    if (writeSpeed != null)
+    {
+        var s = writeSpeed.TrimStart('x', 'X');
+        if (!double.TryParse(s, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var v) || v <= 0)
+        {
+            Console.Error.WriteLine($"Error: Invalid --write-speed '{writeSpeed}'. Use format like 'x1.0'.");
+            return;
+        }
+        writeSpeedValue = v;
+    }
+    Console.WriteLine($"Write speed limit: x{writeSpeedValue:F2} (real-time)");
 
     Console.WriteLine($"Opening: {input}");
     using var playback = new Playback(input);
@@ -68,15 +83,10 @@ ConsoleApp.Run(args, async (
 
             // throttling
             var virtualElapsed = currentPos.ToTimeSpan() - start;
-            var realElapsed = sw.Elapsed;
-            if (virtualElapsed.TotalSeconds > realElapsed.TotalSeconds * speedLimit)
-            {
-                await Task.Delay(1);
-            }
-            else if (count % 10 == 0)
-            {
-                await Task.Yield();
-            }
+            var targetElapsed = virtualElapsed / writeSpeedValue;
+            var delay = targetElapsed - sw.Elapsed;
+            if (delay > TimeSpan.FromMilliseconds(1))
+                await Task.Delay(delay);
 
             if (count % 30 == 0) Console.Write("."); // progression indicator
         }
