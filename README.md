@@ -9,13 +9,14 @@ A CLI tool to trim Azure Kinect recording files (.mkv) by specifying a time rang
 Execute the tool with the following arguments:
 
 ```bash
-k4acut <input_path> <output_path> <start_time> <end_time>
+k4acut <input_path> <output_path> <start_time> <end_time> [--write-speed <multiplier>]
 ```
 
 - `input_path`: Path to the source .mkv file.
 - `output_path`: Path for the trimmed .mkv file.
 - `start_time`: Start timestamp (format: `HH:mm:ss`).
 - `end_time`: End timestamp (format: `HH:mm:ss`).
+- `--write-speed`: (Optional) Maximum write speed as a real-time multiplier (e.g., `x1.0`, `x0.5`). Defaults to `x2.0`.
 
 ### Example
 
@@ -25,11 +26,17 @@ To extract a 10-second segment starting from 5 seconds into the recording:
 k4acut input.mkv output.mkv 00:00:05 00:00:15
 ```
 
+To limit write speed to real-time (e.g., for HDD):
+
+```bash
+k4acut input.mkv output.mkv 00:00:05 00:00:15 --write-speed x1.0
+```
+
 ## Features
 
 - **Configuration Preservation**: Copies color resolution, depth mode, and FPS settings from the source.
 - **IMU Support**: Automatically detects and preserves IMU tracks if present.
-- **Throttling**: Includes a small delay (`Task.Delay(1)`) to prevent frame drops by ensuring disk write operations can keep up with the processing speed.
+- **Throttling**: Limits disk write speed to prevent frame drops. Defaults to x2.0 real-time; configurable via `--write-speed`.
 
 ## Current Limitations
 
